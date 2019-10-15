@@ -1,19 +1,21 @@
 defmodule CircuitsQuickstart.MixProject do
   use Mix.Project
 
-  @all_targets [:rpi, :rpi0, :rpi2, :rpi3, :rpi3a, :rpi4, :bbb, :x86_64]
   @app :circuits_quickstart
+  @version "0.3.0"
+  @all_targets [:rpi, :rpi0, :rpi2, :rpi3, :rpi3a, :rpi4, :bbb, :x86_64]
 
   def project do
     [
       app: @app,
-      version: "0.2.1",
+      version: @version,
       elixir: "~> 1.9",
       archives: [nerves_bootstrap: "~> 1.6"],
       start_permanent: Mix.env() == :prod,
       build_embedded: true,
       aliases: [loadconfig: [&bootstrap/1]],
       deps: deps(),
+      dialyzer: dialyzer(),
       releases: [{@app, release()}],
       preferred_cli_target: [run: :host, test: :host]
     ]
@@ -28,7 +30,46 @@ defmodule CircuitsQuickstart.MixProject do
 
   def application do
     [
+      mod: {CircuitsQuickstart.Application, []},
       extra_applications: [:logger, :runtime_tools, :inets]
+    ]
+  end
+
+  defp deps do
+    [
+      # Dependencies for all targets
+      {:nerves, "~> 1.5.0", runtime: false},
+      {:shoehorn, "~> 0.6"},
+      {:ring_logger, "~> 0.6"},
+      {:toolshed, "~> 0.2"},
+      {:dialyxir, "~> 1.0.0-rc.6", only: [:dev, :test], runtime: false},
+
+      # Circuits projects
+      {:circuits_uart, "~> 1.3"},
+      {:circuits_gpio, "~> 0.4"},
+      {:circuits_i2c, "~> 0.3"},
+      {:circuits_spi, "~> 0.1"},
+      {:power_control, github: "cjfreeze/power_control"},
+      {:ramoops_logger, "~> 0.1"},
+
+      # Dependencies for all targets except :host
+      {:nerves_runtime, "~> 0.10", targets: @all_targets},
+      {:busybox, "~> 0.1", targets: @all_targets},
+      {:vintage_net, "~> 0.6.2", path: "~/nerves/vintage_net", targets: @all_targets},
+      {:nerves_firmware_ssh2, "~> 0.1",
+       github: "fhunleth/nerves_firmware_ssh2", branch: "ssh2", targets: @all_targets},
+      {:nerves_time, "~> 0.3.1", targets: @all_targets},
+      {:mdns_lite, "~> 0.4", targets: @all_targets},
+
+      # Dependencies for specific targets
+      {:nerves_system_rpi, "~> 1.8", runtime: false, targets: :rpi},
+      {:nerves_system_rpi0, "~> 1.8", runtime: false, targets: :rpi0},
+      {:nerves_system_rpi2, "~> 1.8", runtime: false, targets: :rpi2},
+      {:nerves_system_rpi3, "~> 1.8", runtime: false, targets: :rpi3},
+      {:nerves_system_rpi3a, "~> 1.8", runtime: false, targets: :rpi3a},
+      {:nerves_system_rpi4, "~> 1.8", runtime: false, targets: :rpi4},
+      {:nerves_system_bbb, "~> 2.3", runtime: false, targets: :bbb},
+      {:nerves_system_x86_64, "~> 1.8", runtime: false, targets: :x86_64}
     ]
   end
 
@@ -42,36 +83,9 @@ defmodule CircuitsQuickstart.MixProject do
     ]
   end
 
-  defp deps do
+  defp dialyzer() do
     [
-      # Dependencies for all targets
-      {:nerves, "~> 1.5.0", runtime: false},
-      {:shoehorn, "~> 0.6"},
-      {:ring_logger, "~> 0.6"},
-      {:toolshed, "~> 0.2"},
-
-      # Circuits projects
-      {:circuits_uart, "~> 1.3"},
-      {:circuits_gpio, "~> 0.4"},
-      {:circuits_i2c, "~> 0.3"},
-      {:circuits_spi, "~> 0.1"},
-      {:power_control, github: "cjfreeze/power_control"},
-      {:ramoops_logger, "~> 0.1"},
-
-      # Dependencies for all targets except :host
-      {:nerves_runtime, "~> 0.6", targets: @all_targets},
-      {:nerves_init_gadget, "~> 0.4",
-       github: "nerves-project/nerves_init_gadget", branch: "user_password", targets: @all_targets},
-
-      # Dependencies for specific targets
-      {:nerves_system_rpi, "~> 1.8", runtime: false, targets: :rpi},
-      {:nerves_system_rpi0, "~> 1.8", runtime: false, targets: :rpi0},
-      {:nerves_system_rpi2, "~> 1.8", runtime: false, targets: :rpi2},
-      {:nerves_system_rpi3, "~> 1.8", runtime: false, targets: :rpi3},
-      {:nerves_system_rpi3a, "~> 1.8", runtime: false, targets: :rpi3a},
-      {:nerves_system_rpi4, "~> 1.8", runtime: false, targets: :rpi4},
-      {:nerves_system_bbb, "~> 2.3", runtime: false, targets: :bbb},
-      {:nerves_system_x86_64, "~> 1.8", runtime: false, targets: :x86_64}
+      flags: [:race_conditions, :unmatched_returns, :error_handling, :underspecs]
     ]
   end
 end
