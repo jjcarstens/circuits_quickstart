@@ -24,18 +24,13 @@ config :circuits_quickstart,
 config :vintage_net,
   regulatory_domain: "US",
   config: [
-    {"usb0", %{type: VintageNet.Technology.Gadget}},
+    {"usb0", %{type: VintageNetDirect}},
     {"eth0",
      %{
-       type: VintageNet.Technology.Ethernet,
-       ipv4: %{
-         method: :dhcp
-       }
+       type: VintageNetEthernet,
+       ipv4: %{method: :dhcp}
      }},
-    {"wlan0",
-     %{
-       type: VintageNet.Technology.WiFi
-     }}
+    {"wlan0", %{type: VintageNetWiFi}}
   ]
 
 # Import target specific config. This must remain at the bottom
